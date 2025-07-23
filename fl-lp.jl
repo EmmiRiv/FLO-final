@@ -414,67 +414,7 @@ function makeTimeline()
 	sort!(tl, by = x -> dist[x[1]][x[2]])
 	return tl
 end
-
-# ╔═╡ 26512753-e165-4791-99d6-462afb2ceef0
-function eventR(i0, j0, isOpen, contributors, cities, status)
-	if status[j0] == 2 && isOpen[i0]
-		status[j0] = 3
-		push!(cities[i0], j0)
-	elseif status[j0] == 2 && !isOpen[i0]
-		push!(contributors[i0], j0)
-	end
-
-	t = dist[j0][i0]
-
-	for i in 1:m
-		if !isOpen[i]
-			cont = 0
-			for j in contributors[i]
-				if status[j] == 2
-					cont += t - dist[j][i0]
-				end
-			end
-			if cont >= costs[i]
-				openFacR(i, isOpen, contributors, cities, status)
-			end
-		end
-	end
-
-	for j in 1:n
-		if status[j] == 2
-			return false
-		end
-	end
-	return true
-end
 	
-
-# ╔═╡ 5d89c652-2999-4217-bd12-741cf65b1b60
-function incrementR(status, tl)
-	isOpen = Dict()
-	contributors = Dict()
-	cities = Dict()
-	for i in 1:m
-		isOpen[i] = false
-		contributors[i] = []
-		cities[i] = []
-	end
-	for e in tl
-		if status[e[1]] != 1
-			done = eventR(e[2],e[1], isOpen, contributors, cities, status) #facility, client index
-			if done
-				break
-			end
-		end
-	end
-	return cities, status
-end
-
-# ╔═╡ 1b098992-9277-4f8a-b00b-26e5e1d4494f
-# ╠═╡ disabled = true
-#=╠═╡
-fac, stt = incrementR(st,makeTimeline())
-  ╠═╡ =#
 
 # ╔═╡ 34195a22-188d-4baf-b788-2001eab87201
 function finishGroup(g, status, freeze, groups, t)
@@ -603,14 +543,6 @@ function tstRound(xzy)
 	return cost, cens
 end
 
-# ╔═╡ 68e11e07-25dc-4f90-8619-845ec5bef0a1
-function tstRPD(tl, z, y)
-	cens, st = cleaning(z, y)
-	fac, st = incrementR(st, tl)
-	cost = computeCost(fac)
-	return cost, cens
-end
-
 # ╔═╡ ae2389b6-86c0-4c5a-a5b0-644eded2f5ed
 function tstPDO(tl, out)
 	fac, st = increment(tl, [n-out], groupsO)
@@ -637,16 +569,13 @@ function changeRat()
 	costsRO = []
 	costsRF = []
 	costsPD = []
-	costsRPD = []
 	costsOPT = []
 	dispsRO = []
 	dispsRF = []
 	dispsPD = []
-	dispsRPD = []
 	costsPDO = []
 	dispsPDO = []
 	q = 0.5
-	adj = 3
 	
 	tl = makeTimeline()
 	for p in 1:10
@@ -660,152 +589,35 @@ function changeRat()
 
 		costRF, censRF = tstTruncRound(xzyF, numF)
 
-		# costPD, censPD = tstPD(tl, copy(lG))
+		costPD, censPD = tstPD(tl, copy(lG))
 		
 		costPDO, censPDO = tstPDO(tl, sum(lG))
 
-		# costRPD, censRPD = tstRPD(tl, xzyF[numF+1:numF+n], xzyF[numF+n+1:numF+n+m])
 
 		ratRO = [censRO[g]/lG[g] for g in 1:om]
 		ratRF = [censRF[g]/lG[g] for g in 1:om]
-		# ratPD = [censPD[g]/lG[g] for g in 1:om]
-		# ratRPD = [lG[g]/censRPD[g] for g in 1:om]
+		ratPD = [censPD[g]/lG[g] for g in 1:om]
 		ratPDO = [censPDO[g]/lG[g] for g in 1:om]
 
-		# push!(dispsPD, maximum(ratPD))
+		push!(dispsPD, maximum(ratPD))
 		push!(dispsRO, maximum(ratRO))
 		push!(dispsRF, maximum(ratRF))
-		# push!(dispsRPD, maximum(ratRPD)/minimum(ratRPD))
 		push!(dispsPDO, maximum(ratPDO))
 
 		push!(costsRO, costRO)
 		push!(costsRF, costRF)
-		# push!(costsPD, costPD)
-		# push!(costsRPD, costRPD)
+		push!(costsPD, costPD)
 		push!(costsOPT, opF)
 		push!(costsPDO, costPDO)
 
-		print("perc = ", p, "\n\ncostsRO = ", costRO, "\n\ncostsRF = ", costRF, "\n\ncostsPDO = ", costPDO, "\n\ncostsOPT = ", opF, "\n\ndispsRO = ", maximum(ratRO), "\n\ndispsRF = ", maximum(ratRF), "\n\ndispsPDO = ", maximum(ratPDO))
 	end
 	print("perc = ", perc, "\n\ncostsRO = ", costsRO, "\n\ncostsRF = ", costsRF, "\n\ncostsPD = ", costsPD, "\n\ncostsPDO = ", costsPDO, "\n\ncostsRPD = ", costsRPD, "\n\ncostsOPT = ", costsOPT, "\n\ndispsRO = ", dispsRO, "\n\ndispsRF = ", dispsRF, "\n\ndispsPD = ", dispsPD, "\n\ndispsPDO = ", dispsPDO, "\n\ndispsRPD = ", dispsRPD)
 end
 
-# ╔═╡ 1fc6d69e-abf2-4ec5-8df0-8c81101e131b
-"""
-perc = Any[6, 7, 8, 9, 10]
-
-costsRO = Any[3900.104185501693, 3829.8300652475573, 3705.3074004267455, 3657.783169696541, 3549.05058149805]
-
-costsRF = Any[3907.7616323355137, 3832.8161975553185, 3737.5768446558686, 3662.0164122284764, 3554.11912390036]
-
-costsPD = Any[5471.776313463201, 5385.0833492657675, 5310.846991715409, 5227.417719219343, 5148.464253547564]
-
-costsPDO = Any[5459.435054325504, 5371.08503129012, 5285.846255666279, 5220.800852401908, 5140.05286131324]
-
-costsRPD = Any[5544.524120889405, 5467.242925801546, 5409.0125260124005, 5316.980364520852, 5243.3747648804865]
-
-costsOPT = Any[3823.654380154984, 3744.631837183172, 3669.71947559132, 3596.247137762614, 3523.9407473666956]
-
-dispsRO = Any[1.6708812260536399, 1.5554661301140174, 1.6883438818565402, 1.6673325010403661, 1.6189423076923077]
-
-dispsRF = Any[1.0052523103517055, 1.0096153846153846, 1.0093750000000001, 1.0081018518518519, 1.0103424657534246]
-
-dispsPD = Any[1.0, 1.0, 1.0, 1.0, 1.0]
-
-dispsPDO = Any[2.063354700854701, 1.9730914588057444, 1.8775555555555556, 1.7070411070411071, 1.6475961538461539]
-
-dispsRPD = Any[1.0052523103517055, 1.0096153846153846, 1.0093750000000001, 1.0081018518518519, 1.0103424657534246]
-"""
-
 # ╔═╡ 9227d457-a5c7-41cc-a31f-7655060ac27f
 changeRat()
 
-# ╔═╡ 734c8fed-1643-4e70-a3cc-a9d911de952d
-# ╠═╡ disabled = true
-#=╠═╡
-function changeQ()
-	quant = []
-	costsR = []
-	costsRPD = []
-	costsOPT = []
-	dispsR = []
-	dispsRPD = []
-	p = 0.05
-	lG = [floor((p/100)*l) for l in gC]
-	
-	tl = makeTimeline()
-	for q in 1:10
-		push!(quant, q/10)
-		
-		xzy, op = solveLP(groupsF, copy(lG), q/10)
-		
-		costR, censR = tstRound(xzy, num)
 
-		costRPD, censRPD = tstRPD(tl, xzy[num+1:num+n])
-
-		ratR = [lG[g]/censR[g] for g in 1:om]
-		ratRPD = [lG[g]/censRPD[g] for g in 1:om]
-
-		push!(dispsR, maximum(ratR)/minimum(ratR))
-		push!(dispsRPD, maximum(ratRPD)/minimum(ratRPD))
-
-		push!(costsR, costR)
-		push!(costsRPD, costRPD)
-		push!(costsOPT, op)
-	end
-	print(quant, costsR, costsRPD, costsOPT, dispsR, dispsRPD)
-	
-end
-  ╠═╡ =#
-
-# ╔═╡ 018241d0-8cf7-4785-a42c-d2e299b41d56
-# ╠═╡ disabled = true
-#=╠═╡
-changeQ()
-  ╠═╡ =#
-
-# ╔═╡ 0209a683-4795-4215-9d12-0e06a2ff7b5e
-function adjustOut()
-	outlier_out = []
-	fair_out = []
-	fcost = []
-	ocost = []
-	outlier_uncov = []
-	fair_uncov = []
-	for p in 0:20
-		#@printf("percent outliers: %d",p)
-		outG = [floor((p/100)*l) for l in gC]
-		outL = [sum(outG)]
-		xzyF, opF = solveLP(groupsF,outG)
-		xzyO, opO = solveLP(groupsO,outL)
-		stF, facF, uncovF, outliersF = round(xzyF)
-		stO, facO, uncovO, outliersO = round(xzyO)
-		costF = computeCost(facF)
-		costO = computeCost(facO)
-		# @printf("outlier cost: %f\n",costO)
-		# @printf("fair cost: %f\n",costF)
-		# print(censO,censF,"\n\n")
-		# print([oOPTval, fOPTval])
-		push!(outlier_out,outliersO)
-		push!(fair_out,outliersF)
-		push!(fcost,costF)
-		push!(ocost,costO)
-		push!(outlier_uncov, uncovO)
-		push!(fair_uncov, uncovF)
-	end
-	print("outlier_uncovLP1 = ",outlier_uncov)
-	print("\n\nfair_uncovLP1 = ",fair_uncov)
-	print("\n\noutlier_costLP1 = ",ocost)
-	print("\n\nfair_costLP1 = ",fcost)
-	print("\n\noutlier_outLP1 = ",outlier_out)
-	print("\n\nfair_outLP1 = ",fair_out)
-end
-
-# ╔═╡ 2223c02c-47e3-481f-bb59-bdfd8cc8a739
-# ╠═╡ disabled = true
-#=╠═╡
-adjustOut()
-  ╠═╡ =#
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
