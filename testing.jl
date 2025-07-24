@@ -7,12 +7,6 @@ using InteractiveUtils
 # ╔═╡ 8ebeb3b0-6510-11f0-1a05-a9bb7c54b706
 using CSV, Printf
 
-# ╔═╡ 6dd7b362-9df1-497e-ab1c-50fe1b0a15c8
-fC = CSV.File(open("subsets/adult-236-36.csv"))
-
-# ╔═╡ 81441eca-f2f0-4dcc-8d4f-6be700139a54
-fF = CSV.File(open("subsets/adult-236-36-fac.csv"))
-
 # ╔═╡ 489e49bd-c92d-4f4a-b6d2-bde7828d3e33
 function l2(v1, v2)
 	d = 0
@@ -24,8 +18,8 @@ end
 
 # ╔═╡ 5f2e41b1-7f61-4f23-9756-988f6c34b96b
 function process()
-	fC = CSV.File(open("subsets/adult-236-36.csv"))
-	fF = CSV.File(open("subsets/adult-236-36-fac.csv"))
+	fC = CSV.File(open("adult-500-20.csv"))
+	fF = CSV.File(open("adult-500-20-fac.csv"))
 	Fpos = []
 	dist = []
 	distMatr = []
@@ -81,8 +75,8 @@ end
 
 # ╔═╡ d5b1c885-4dbd-4702-b33d-26c95dc9435b
 function processSynth()
-	fC = CSV.File(open("datasets-synth/synth-90-10.csv"))
-	fF = CSV.File(open("datasets-synth/synth-90-10-fac.csv"))
+	fC = CSV.File(open("synth-500-20.csv"))
+	fF = CSV.File(open("synth-500-20-fac.csv"))
 	Fpos = []
 	dist = []
 	distMatr = []
@@ -333,8 +327,7 @@ end
 function tstFair(lG, gam, out)
 	ctrsF, assignmentF = loopGuess(groupsF, lG, gam)
 	realCensus, realCost = takeRealCensus(assignmentF)
-	censusF, costF = controlOut(out, ctrsF)
-	return censusF, costF, realCensus, realCost
+	return realCensus, realCost
 end
 
 # ╔═╡ 5f32345e-5706-4027-8f75-7b643f8423b7
@@ -345,8 +338,7 @@ function tstOut(gam, out)
 	end
 	ctrsO, assignmentO = loopGuess(groupsO, [out], gam)
 	realCensus, realCost = takeRealCensus(assignmentO)
-	censusO, costO = controlOut(out, ctrsO)
-	return censusO, costO, realCensus, realCost
+	return realCensus, realCost
 end
 
 # ╔═╡ 7ef27f26-1357-4c8a-bf39-af6d68f329db
@@ -362,16 +354,9 @@ end
 
 # ╔═╡ 9fa0610b-c971-44d6-b185-9cdd93c330fe
 function loopGuessBasic(groups, gam)
-	eps = om/gam
 	minCost = n*dmax
 	minC = []
-	if dmin > 0
-		guess = n*dmin
-	else
-		guess = 1
-	end
-
-	while guess < n*dmax
+	for _ in 1:15
 		C, FC, assignment, cost = loopSearchBasic(groups, guess)
 		if cost < minCost
 			minCost = cost
@@ -432,30 +417,24 @@ function changeRat()
 
 		for gg in 1:5
 			gam = (gg+p)/10
-			cenF, cstF, cenRF, cstRF = tstFair(lG, gam, out)
-			cenO, cstO, cenRO, cstRO = tstOut(gam/om, out)
+			cenRF, cstRF = tstFair(lG, gam, out)
+			cenRO, cstRO = tstOut(gam/om, out)
 			cB, cenB, cstB = tstBasic(gam, out)
 	
-			push!(costF, cstF)
 			push!(costRF, cstRF)
-			push!(costO, cstO)
 			push!(costRO, cstRO)
 			push!(costB, cstB)
 	
-			ratF = [cenF[g]/lG[g] for g in 1:om]
-			ratO = [cenO[g]/lG[g] for g in 1:om]
 			ratB = [cenB[g]/lG[g] for g in 1:om]
 			ratRF = [cenRF[g]/lG[g] for g in 1:om]
 			ratRO = [cenRO[g]/lG[g] for g in 1:om]
 	
-			push!(dispF, maximum(ratF))
-			push!(dispO, maximum(ratO))
 			push!(dispB, maximum(ratB))
 			push!(dispRF, maximum(ratRF))
 			push!(dispRO, maximum(ratRO))
 		end
 	end
-	print(costRF, costF, costRO, costO, costB, dispRF, dispF, dispRO, dispO, dispB)
+	print(costRF, costRO, costB, dispRF, dispRO, dispB)
 end
 
 # ╔═╡ 2d97ac84-8a33-4e59-901b-59b642c895ca
