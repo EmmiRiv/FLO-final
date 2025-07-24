@@ -18,8 +18,8 @@ end
 
 # ╔═╡ ddd6838c-4a35-456b-b0cb-1af6f044002f
 function process()
-	fC = CSV.File(open("subsets/adult-01-100.csv"))
-	fF = CSV.File(open("subsets/adult-01-100-fac.csv"))
+	fC = CSV.File(open("adult-01-100.csv"))
+	fF = CSV.File(open("adult-01-100-fac.csv"))
 	Fpos = []
 	dist = []
 	gps = Dict()
@@ -74,8 +74,8 @@ end
 
 # ╔═╡ 646f38af-8ed5-4ed0-9c98-9f606cf22154
 function processSynth()
-	fC = CSV.File(open("datasets-synth/synth-500-40.csv"))
-	fF = CSV.File(open("datasets-synth/synth-500-40-fac.csv"))
+	fC = CSV.File(open("synth-500-50.csv"))
+	fF = CSV.File(open("synth-500-50-fac.csv"))
 	Fpos = []
 	dist = []
 	gps = Dict()
